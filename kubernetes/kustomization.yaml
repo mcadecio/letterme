@@ -1,0 +1,3 @@
+resources:
+  - letterme-deployment.yaml
+  - letterme-service.yaml

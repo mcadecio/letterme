@@ -1,0 +1,199 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Letter Me API",
+    "description": "An API that you can use to save and get your letters",
+    "version": "1.0.0"
+  },
+  "tags": [
+    {
+      "name": "Letters"
+    }
+  ],
+  "paths": {
+    "/api/letters/listall": {
+      "get": {
+        "summary": "Returns all letters by Dates",
+        "description": "Returns all your saved letters",
+        "operationId": "listAll",
+        "x-vertx-event-bus": "letters.letterme",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "result": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "success": true,
+                  "result": [
+                    "2020-03-21"
+                  ]
+
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/letters/save": {
+      "post": {
+        "tags": [
+          "Letters"
+        ],
+        "summary": "Saves a letter",
+        "operationId": "saveLetter",
+        "x-vertx-event-bus": "letters.letterme",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data;": {
+              "schema": {
+                "description": "An Image or file"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DefaultResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "Centrify": {
+        "type": "http",
+        "scheme": "basic",
+        "description": "Centrify will be used to validate your identity. Use your normal Mimecast username and password"
+      },
+      "LDAP": {
+        "type": "http",
+        "scheme": "basic",
+        "description": "LDAP will be used to verify your identity. Use your normal LDAP username and password"
+      }
+    },
+    "schemas": {
+      "IncidentReport": {
+        "type": "object",
+        "properties": {
+          "incidentGUID": {
+            "type": "string"
+          },
+          "reporter": {
+            "type": "string"
+          },
+          "information": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false,
+        "required": [
+          "incidentGUID",
+          "reporter",
+          "information"
+        ]
+      },
+      "DefaultResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "result": {
+            "type": "object"
+          }
+        }
+      },
+      "IncidentStatusUpdate": {
+        "type": "object",
+        "properties": {
+          "incidentGUID": {
+            "type": "string"
+          },
+          "newValue": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false,
+        "required": [
+          "incidentGUID",
+          "newValue"
+        ]
+      },
+      "IncidentNPRequest": {
+        "description": "Incident Non Priority Request Template",
+        "type": "object",
+        "properties": {
+          "incidentGUID": {
+            "type": "string"
+          },
+          "ticket": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false,
+        "required": [
+          "incidentGUID",
+          "ticket"
+        ]
+      },
+      "IncidentCreateRoleRequest": {
+        "description": "Create a Role Template",
+        "type": "object",
+        "properties": {
+          "incidentGUID": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string"
+          },
+          "assignees": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "default": []
+          }
+        },
+        "additionalProperties": false,
+        "required": [
+          "incidentGUID",
+          "role"
+        ]
+      }
+    }
+  },
+  "security": [
+    {
+      "LDAP": [
+      ]
+    },
+    {
+      "Centrify": [
+      ]
+    }
+  ]
+}

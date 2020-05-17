@@ -1,0 +1,26 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: letterme-deployment
+  labels:
+    app: letterme
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: letterme
+  template:
+    metadata:
+      labels:
+        app: letterme
+    spec:
+      containers:
+        - name: mta
+          image: mcadecio/letterme:latest
+          imagePullPolicy: Always
+          command:
+            - java
+            - -jar
+            - /app/letterme-1.0-SNAPSHOT.jar
+          ports:
+            - containerPort: 8080
