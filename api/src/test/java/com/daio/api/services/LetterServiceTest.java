@@ -12,6 +12,11 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Collections;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -20,24 +25,16 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 class LetterServiceTest {
 
-    private static final String SOME_PATH = "/some/path";
-
     @Mock
     private RoutingContext routingContext;
-    @Mock
-    private HttpServerRequest serverRequest;
-
-    private HttpServerResponse serverResponse;
     private FileUploadHandler fileHandler;
 
     @BeforeEach
     void before() {
-        serverResponse = new BasicHttpServerResponse();
+        HttpServerResponse serverResponse = new BasicHttpServerResponse();
         fileHandler = (fileUpload) -> {
         };
-        when(routingContext.request()).thenReturn(serverRequest);
         when(routingContext.response()).thenReturn(serverResponse);
-        when(serverRequest.path()).thenReturn(SOME_PATH);
     }
 
     @Test
@@ -55,7 +52,7 @@ class LetterServiceTest {
     @Test
     @DisplayName("listall() should return a json with all the filenames")
     void testListAll() {
-        final LetterService letterService = new LetterService(fileHandler, () -> Map.of("2020-01-01", new String[]{"text.txt"}));
+        final LetterService letterService = new LetterService(fileHandler, () -> Map.of("2020-01-01", Collections.singletonList("text.txt")));
 
         final BasicHttpServerResponse response = (BasicHttpServerResponse) letterService.listAll(routingContext);
 
@@ -75,5 +72,32 @@ class LetterServiceTest {
 
         assertEquals(200, response.statusCode);
         assertEquals("/src/file-uploads/2020-01-12/file.txt", response.sendFile);
+    }
+
+    @Test
+    @DisplayName("remove() should delete the file when it is present")
+    void testRemove() throws IOException {
+        final Path defaultPath = Paths.get(
+                "src",
+                "test",
+                "file-uploads"
+        );
+        final Path tempDirectory = Files.createTempDirectory(Paths.get(defaultPath.toString(), "2020-05-10"), "");
+        final Path tempFile = Files.createTempFile(
+                tempDirectory,
+                "file",
+                ".txt"
+        );
+        when(routingContext.pathParam("filename")).thenReturn(tempFile.getFileName().toString());
+        when(routingContext.pathParam("date")).thenReturn(tempDirectory.getFileName().toString());
+        final LetterService letterService = new LetterService(fileHandler, null);
+
+        final BasicHttpServerResponse response = (BasicHttpServerResponse) letterService.remove(routingContext, "/src/file-uploads");
+
+        assertEquals(200, response.statusCode);
+        assertEquals(tempFile.toString(), response.sendFile);
+
+        tempDirectory.toFile().deleteOnExit();
+        tempFile.toFile().deleteOnExit();
     }
 }

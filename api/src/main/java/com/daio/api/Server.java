@@ -1,47 +1,55 @@
 package com.daio.api;
 
-import com.daio.api.filehandler.FileNameSupplierImpl;
-import com.daio.api.filehandler.FileUploadHandlerImpl;
-import com.daio.api.services.LetterService;
+import com.daio.api.config.ServiceConfig;
+import com.daio.api.module.ApiModule;
+import com.daio.api.services.Service;
+import com.google.inject.Guice;
+import com.google.inject.Inject;
+import com.google.inject.Injector;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpServer;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.handler.BodyHandler;
+import io.vertx.ext.web.handler.StaticHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class Server extends AbstractVerticle {
 
-    private static final String UPLOAD_DIRECTORY = "/Users/ddaio/work/LetterMe/fileuploads";
-    private final Logger logger = LoggerFactory.getLogger(getClass());
-    private final LetterService letterService = new LetterService(new FileUploadHandlerImpl(), new FileNameSupplierImpl(UPLOAD_DIRECTORY));
+    private static final Logger logger = LoggerFactory.getLogger(Server.class);
+    private final Service letterService;
     private HttpServer httpServer;
+    private final ServiceConfig config;
+
+    @Inject
+    Server(Service service, ServiceConfig config) {
+        this.config = config;
+        letterService = service;
+    }
 
     @Override
     public void start(Promise<Void> startPromise) {
 
         final var router = Router.router(vertx);
 
-        router.route("/api/letters/save").handler(BodyHandler.create(UPLOAD_DIRECTORY));
-
+        router.route("/*").handler(StaticHandler.create("static"));
+        router.route("/api/letters/save").handler(BodyHandler.create(config.getUploadDirectory()));
+        router.route("/api*").handler(rc -> {
+            final String path = rc.request().path();
+            logger.info("Received request on path - {}", path);
+            rc.next();
+        });
         router.get("/api/letters/listall").handler(rc -> letterService.listAll(rc).end());
-        /*
-            curl \
-              -F "userid=1" \
-              -F "filecomment=This is an image file" \
-              -F "image=@/home/user1/Desktop/test.jpg" \
-              localhost/uploader.php
-         */
+        router.get("/api/letters/get/:date/:filename").handler(rc -> letterService.getFile(rc, config.getUploadDirectory()).end());
         router.post("/api/letters/save").handler(rc -> letterService.save(rc).end());
-        router.get("/api/letters/get/:date/:filename").handler(rc -> letterService.getFile(rc, UPLOAD_DIRECTORY).end());
-
+        router.delete("/api/letters/delete/:date/:filename").handler(rc -> letterService.remove(rc, config.getUploadDirectory()).end());
 
         httpServer = vertx.createHttpServer();
         httpServer
                 .requestHandler(router)
-                .listen(8080, "192.168.0.79", result -> {
+                .listen(config.getPort(), config.getDefaultAddress(), result -> {
                     logger.info("HTTP Server Started ...");
                     startPromise.complete();
                 });
@@ -56,6 +64,7 @@ public class Server extends AbstractVerticle {
     }
 
     public static void main(String[] args) {
-        Vertx.vertx().deployVerticle(new Server());
+        final Injector injector = Guice.createInjector(new ApiModule());
+        Vertx.vertx().deployVerticle(injector.getInstance(Server.class));
     }
 }

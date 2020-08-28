@@ -9,6 +9,8 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -32,13 +34,14 @@ class FileNameSupplierImplTest {
     void testGet1() throws IOException {
         generateFiles(3);
 
-        final Map<String, String[]> fileNames = fileNameSupplier.get();
-        final Map<String, String[]> expected = Map.of(
-          "ABC0", new String[]{"temp0.txt"},
-          "ABC1", new String[]{"temp1.txt"},
-          "ABC2", new String[]{"temp0.txt"}
+        final Map<String, List<String>> fileNames = fileNameSupplier.get();
+        final Map<String, List<String>> expected = Map.of(
+          "ABC0", Collections.singletonList("temp0.txt"),
+          "ABC1", Collections.singletonList("temp1.txt"),
+          "ABC2", Collections.singletonList("temp2.txt")
         );
 
+        assertEquals(3, fileNames.size());
         assertEquals(fileNames, expected);
     }
 
@@ -46,7 +49,7 @@ class FileNameSupplierImplTest {
     @DisplayName("get() should return an empty list when there are no files in directory")
     @Test
     void testGet2() {
-        final Map<String, String[]> fileNames = fileNameSupplier.get();
+        final Map<String, List<String>> fileNames = fileNameSupplier.get();
 
         assertTrue(fileNames.isEmpty());
     }

@@ -1,0 +1,5 @@
+{
+  "uploadDirectory": "/Users/ddaio/work/LetterMe/fileuploads",
+  "port": 8080,
+  "defaultAddress": "0.0.0.0"
+}

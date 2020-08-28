@@ -1,0 +1,6 @@
+{
+  "$schema": "../../../../cfg/schema/service-schema.json",
+  "uploadDirectory": "/path/to/upload",
+  "port": 80,
+  "defaultAddress": "localhost"
+}

@@ -4,3 +4,4 @@ dependency-reduced-pom.xml
 fileuploads/**
 temp-storage
 **.png
+test/node_modules/**
