@@ -14,7 +14,7 @@
 
     <properties>
         <java.version>11</java.version>
-        <version.vertx>3.9.0</version.vertx>
+        <version.vertx>4.5.24</version.vertx>
     </properties>
 
     <dependencies>
